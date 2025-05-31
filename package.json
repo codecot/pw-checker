@@ -1,0 +1,27 @@
+{
+  "name": "pw-checker",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "view": "node --loader ts-node/esm src/queryDb.ts",
+    "view:compromised": "node --loader ts-node/esm src/queryDb.ts --compromised",
+    "view:safe": "node --loader ts-node/esm src/queryDb.ts --safe",
+    "view:unchecked": "node --loader ts-node/esm src/queryDb.ts --unchecked",
+    "start": "node --loader ts-node/esm src/index.ts"
+  },
+  "keywords": [],
+  "description": "CLI tool to audit passwords locally using HIBP and Chrome data",
+  "author": "Volodymyr Pasichnyk <volodymyr.pasichnyk@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "csv-parser": "^3.2.0",
+    "node-fetch": "^3.3.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
