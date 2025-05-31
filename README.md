@@ -1,6 +1,6 @@
 # Password Checker
 
-A CLI tool to audit passwords locally using Have I Been Pwned (HIBP) and Chrome data.
+🔐 A local CLI tool that helps you audit saved passwords for security breaches using the Have I Been Pwned (HIBP) API and optional Chrome password database analysis. All data remains local — privacy first.
 
 ## Overview
 
@@ -12,11 +12,27 @@ This tool allows you to check if your passwords have been compromised in data br
 
 ## Features
 
-- ✅ Import passwords from CSV files
-- ✅ Check passwords against HIBP securely
-- ✅ Color-coded terminal output for easy status viewing
-- ✅ Filter password entries by status (compromised, safe, unchecked)
-- 🔄 Import passwords from Chrome (coming soon)
+### ✅ Current Features
+
+| Feature | Status |
+| ------- | ------ |
+| CSV import → SQLite | ✅ Done (importCsv.ts) |
+| HIBP password check | ✅ Done (checkPasswords.ts) |
+| SQLite database setup | ✅ Done (pw_entries table) |
+| Terminal viewer with filters | ✅ Done (queryDb.ts) |
+| Modern TypeScript + ES Modules | ✅ Done |
+| MIT License & GitHub repo | ✅ Done |
+
+### 📋 Planned Features
+
+| Goal | Description |
+| ---- | ----------- |
+| 🔍 Chrome DB import | Read Login Data from Chrome and mark compromised accounts |
+| 📊 Password strength analysis | Use zxcvbn or OWASP to score each password |
+| 🏷 Credential categorization | Mark entries like bank, email, work, etc. |
+| 🖼 Logo/visual enrichment | Pull site logos via Clearbit API |
+| 🔐 Bitwarden CLI integration | Import/export from Bitwarden (bw) |
+| 🌐 Web UI dashboard | React frontend + Fastify/Express backend |
 
 ## Requirements
 
@@ -70,7 +86,29 @@ npm start
 
 - This tool stores passwords in plaintext in a local SQLite database
 - Never share your `pw_entries.sqlite` database file
-- Consider adding the `db/` directory to your `.gitignore` file
+- Consider adding the `db/` directory to your `.gitignore` file (already done in this repo)
+
+## Project Structure
+
+```
+pw-checker/
+├── src/
+│   ├── index.ts             # Entry point
+│   ├── importCsv.ts         # CSV → SQLite
+│   ├── checkPasswords.ts    # HIBP verification
+│   ├── queryDb.ts           # View data
+├── data/
+│   ├── passwords.csv        # Input file
+│   └── example-passwords.csv # Example template
+├── db/
+│   └── pw_entries.sqlite    # Local database
+├── package.json
+├── tsconfig.json
+├── LICENSE (MIT)
+├── README.md
+├── CONTRIBUTING.md
+└── .gitignore
+```
 
 ## License
 
