@@ -43,6 +43,23 @@ else
     echo "ℹ️  data/chrome-passwords.csv already exists"
 fi
 
+# Create .env file if it doesn't exist
+if [ ! -f ".env" ]; then
+    if [ -f ".env.template" ]; then
+        cp ".env.template" ".env"
+        echo "✅ Created .env from template"
+        echo "⚠️  Please edit .env and add your HIBP API key"
+    else
+        echo "# pw-checker Environment Configuration" > ".env"
+        echo "# Get your API key from: https://haveibeenpwned.com/API/Key" >> ".env"
+        echo "HIBP_API_KEY=your-api-key-here" >> ".env"
+        echo "✅ Created .env file"
+        echo "⚠️  Please edit .env and add your HIBP API key"
+    fi
+else
+    echo "ℹ️  .env file already exists"
+fi
+
 echo
 echo "🔐 Security Status:"
 echo "==================="
@@ -70,7 +87,9 @@ echo "📝 Next Steps:"
 echo "=============="
 echo "1. Add your passwords to data/passwords.csv"
 echo "2. Export Chrome passwords to data/chrome-passwords.csv"
-echo "3. Run 'npm start' to import and check passwords"
-echo "4. These files will never be committed to Git"
+echo "3. Set up HIBP API key in .env file (see docs/HIBP_API_SETUP.md)"
+echo "4. Run 'npm start' to import and check passwords"
+echo "5. Use 'npm run check:breaches' for account breach checking"
+echo "6. These files will never be committed to Git"
 echo
 echo "🛡️  Your password data is now secure!"

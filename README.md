@@ -78,6 +78,7 @@ npm run view
 ## 🔒 Security & Privacy
 
 **Your data stays local** - passwords never leave your machine:
+
 - All processing happens locally in SQLite
 - Only password hash prefixes (5 chars) are sent to HIBP API
 - CSV files containing real passwords are never committed to Git
@@ -92,6 +93,49 @@ npm run security:setup
 # Manual verification
 git check-ignore data/passwords.csv data/chrome-passwords.csv
 ```
+
+## 🚀 Rate Limiting & API Optimization
+
+For HIBP breach checking, pw-checker implements intelligent rate limiting and optimization:
+
+### Key Features
+
+- **Email Deduplication**: Only checks each unique email once (can reduce API calls by 80%+)
+- **Batch Processing**: Respects 10 req/min API limits with smart batching
+- **Resume Capability**: Continue interrupted checks from where you left off
+- **Progress Tracking**: Detailed statistics and ETA estimates
+- **Cron-Friendly**: Scheduled mode for automated processing
+- **Incremental Processing**: Each API call intelligently updates all database entries sharing the same email address
+
+### Rate Limiting Configuration
+
+The tool automatically handles HIBP API rate limits:
+
+- **Pwned 1 Tier**: 10 requests/minute (default configuration)
+- Batches of 8 accounts with 7-second delays between requests
+- 70-second delays between batches to prevent rate limit violations
+
+### Example Workflow
+
+```bash
+# Check current progress
+npm run check:breaches:stats
+
+# Start or resume breach checking
+npm run check:breaches
+npm run check:breaches:resume
+
+# For large datasets: set up automated processing
+# This processes small batches every 10 minutes
+crontab -e
+# Add: */10 * * * * /path/to/scripts/cron-breach-check.sh
+```
+
+**Read our comprehensive guides:**
+
+- [`docs/HIBP_API_SETUP.md`](docs/HIBP_API_SETUP.md) - API key setup
+- [`docs/RATE_LIMITING.md`](docs/RATE_LIMITING.md) - Detailed rate limiting guide
+- [`docs/ADVANCED_FEATURES.md`](docs/ADVANCED_FEATURES.md) - Complete guide to advanced features
 
 ### Available Commands
 
@@ -108,7 +152,13 @@ git check-ignore data/passwords.csv data/chrome-passwords.csv
 
 - `npm run import:chrome` - Import passwords from Chrome database
 - `npm run import:chrome-csv` - Import passwords from Chrome CSV export
+
+**Breach Checking Commands:**
+
 - `npm run check:breaches` - Check email accounts for data breaches (requires HIBP API key)
+- `npm run check:breaches:stats` - Show breach check progress and statistics
+- `npm run check:breaches:resume` - Resume interrupted breach checks
+- `npm run check:breaches:scheduled` - Run single batch for cron jobs (rate limit friendly)
 
 **View Commands:**
 
@@ -117,8 +167,13 @@ git check-ignore data/passwords.csv data/chrome-passwords.csv
 - `npm run view:safe` - View only safe passwords
 - `npm run view:unchecked` - View only unchecked passwords
 - `npm run view:breached` - View only accounts found in data breaches
+- `npm run view:breached:detailed` - View detailed breach information with descriptions and affected data
 - `npm run view:chrome` - View only Chrome-imported entries
 - `npm run view:chrome-compromised` - View only Chrome entries marked as compromised
+
+**Analysis Commands:**
+
+- `npm run analyze:breaches` - Comprehensive breach analysis with recent breaches, multi-account impacts, and domain statistics
 
 **Utility Commands:**
 

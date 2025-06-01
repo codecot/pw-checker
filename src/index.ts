@@ -1,11 +1,19 @@
 // password-checker/src/index.ts
+import dotenv from "dotenv";
 import { importCsvToDb } from "./importCsv.js";
 import { checkAllPasswords } from "./checkPasswords.js";
-import { checkAllAccountsForBreaches } from "./checkBreaches.js";
+import {
+  checkAllAccountsForBreaches,
+  runScheduledBreachCheck,
+  showBreachStatistics,
+} from "./checkBreaches.js";
 import { importFromChrome } from "./importFromChrome.js";
 import { importFromChromeCsv } from "./importFromChromeCsv.js";
 import chalk from "chalk";
 import fs from "fs";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Parse command-line arguments
 const args = process.argv.slice(2);
@@ -22,7 +30,19 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log("  --chrome-csv=PATH Specify custom path to Chrome CSV file");
   console.log("\nSecurity Options:");
   console.log(
-    "  --check-breaches Check email accounts for data breaches (requires HIBP API key)"
+    "  --check-breaches     Check email accounts for data breaches (requires HIBP API key)"
+  );
+  console.log(
+    "  --breach-stats       Show breach check progress and statistics"
+  );
+  console.log(
+    "  --breach-scheduled   Run a single batch of breach checks (for cron jobs)"
+  );
+  console.log(
+    "  --resume             Resume breach checking from where it left off"
+  );
+  console.log(
+    "  --limit=N            Limit number of accounts to check (e.g., --limit=10)"
   );
   console.log("\nDevelopment Options:");
   console.log(
@@ -32,18 +52,36 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log("\nOther Options:");
   console.log("  --help, -h       Show this help message");
   console.log("\nExamples:");
-  console.log("  npm start                    Import CSV and check passwords");
-  console.log("  npm run import:chrome-csv    Import from Chrome CSV export");
-  console.log("  npm run check:breaches       Check for data breaches");
-  console.log("  npm run view                 View all entries");
-  console.log("  npm run view -- --chrome     View only Chrome entries");
+  console.log(
+    "  npm start                       Import CSV and check passwords"
+  );
+  console.log(
+    "  npm run import:chrome-csv       Import from Chrome CSV export"
+  );
+  console.log("  npm run check:breaches          Check for data breaches");
+  console.log("  npm run view                    View all entries");
+  console.log("  npm run view -- --chrome        View only Chrome entries");
+  console.log(
+    "  npm run view:breached           View accounts found in breaches"
+  );
+  console.log(
+    "  npm run view:breached:detailed  View detailed breach information"
+  );
+  console.log("  npm run analyze:breaches        Analyze all breach data");
   process.exit(0);
 }
 
 const importChrome = args.includes("--chrome");
 const importChromeCsv = args.includes("--chrome-csv");
 const checkBreaches = args.includes("--check-breaches");
+const breachStats = args.includes("--breach-stats");
+const breachScheduled = args.includes("--breach-scheduled");
+const resumeBreachCheck = args.includes("--resume");
 const chromeCsvPath = getChromeExportPath(args);
+
+// Parse limit parameter
+const limitArg = args.find((arg) => arg.startsWith("--limit="));
+const limitValue = limitArg ? parseInt(limitArg.split("=")[1]) : undefined;
 
 function getChromeExportPath(args: string[]): string {
   const pathIndex = args.findIndex((arg) => arg === "--chrome-csv-path");
@@ -56,6 +94,24 @@ function getChromeExportPath(args: string[]): string {
 (async () => {
   try {
     console.log("🔐 Starting pw-checker...");
+
+    // Handle breach statistics request first (no other processing needed)
+    if (breachStats) {
+      await showBreachStatistics();
+      return;
+    }
+
+    // Handle scheduled breach check (for cron jobs)
+    if (breachScheduled) {
+      const batchSize = limitValue || 8;
+      const completed = await runScheduledBreachCheck(batchSize);
+      if (completed) {
+        console.log(
+          chalk.green("🎉 All accounts have been checked for breaches!")
+        );
+      }
+      return;
+    }
 
     // Import passwords from CSV
     console.log("📥 Checking for CSV file: data/passwords.csv");
@@ -136,7 +192,10 @@ function getChromeExportPath(args: string[]): string {
       // Check accounts for data breaches if requested
       if (checkBreaches) {
         console.log("🔍 Checking accounts for data breaches...");
-        await checkAllAccountsForBreaches(limitRecords);
+        await checkAllAccountsForBreaches(
+          limitValue || limitRecords,
+          resumeBreachCheck
+        );
       }
     }
 

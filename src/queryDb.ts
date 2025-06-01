@@ -30,6 +30,9 @@ async function showTable(filter?: string) {
   } else if (filter === "breached") {
     query +=
       " WHERE breach_info IS NOT NULL AND breach_info LIKE '%\"breached\":true%'";
+  } else if (filter === "breached-detailed") {
+    query +=
+      " WHERE breach_info IS NOT NULL AND breach_info LIKE '%\"breached\":true%'";
   } else if (filter === "chrome") {
     query += " WHERE source = 'chrome'";
   } else if (filter === "chrome-compromised") {
@@ -63,10 +66,10 @@ async function showTable(filter?: string) {
           const breachInfo = JSON.parse(row.breach_info);
           if (breachInfo.breached) {
             breachText = chalk.red(
-              `🚨 Found in ${breachInfo.count} data breaches`
+              ` 🚨 Found in ${breachInfo.count} data breaches`
             );
           } else if (breachInfo.checked) {
-            breachText = chalk.green("✅ No data breaches found");
+            breachText = chalk.green(" ✅ No data breaches found");
           }
         } catch (e) {
           // Invalid JSON
@@ -78,8 +81,71 @@ async function showTable(filter?: string) {
           row.url
         )} | ${chalk.magenta(row.username)} | ${status} | ${
           row.last_checked_at || "never checked"
-        } ${breachText}`
+        }${breachText}`
       );
+
+      // Show detailed breach info if requested and available
+      if (
+        (filter === "breached" || filter === "breached-detailed") &&
+        row.breach_info
+      ) {
+        try {
+          const breachInfo = JSON.parse(row.breach_info);
+          if (breachInfo.breached && breachInfo.breaches) {
+            // Sort breaches by date (newest first)
+            const sortedBreaches = [...breachInfo.breaches].sort(
+              (a: any, b: any) => {
+                const dateA = new Date(a.date || a.breachDate || "1970-01-01");
+                const dateB = new Date(b.date || b.breachDate || "1970-01-01");
+                return dateB.getTime() - dateA.getTime();
+              }
+            );
+
+            const maxBreaches =
+              filter === "breached-detailed" ? sortedBreaches.length : 3;
+            sortedBreaches.slice(0, maxBreaches).forEach((breach: any) => {
+              const breachDate =
+                breach.date || breach.breachDate || "Unknown date";
+              console.log(
+                chalk.red(
+                  `     - ${breach.title || breach.name} (${breach.domain}) - ${breachDate}`
+                )
+              );
+              if (breach.dataTypes && breach.dataTypes.length > 0) {
+                console.log(
+                  chalk.yellow(
+                    `       Data exposed: ${breach.dataTypes.join(", ")}`
+                  )
+                );
+              }
+              if (breach.description && filter === "breached-detailed") {
+                console.log(
+                  chalk.gray(
+                    `       ${breach.description.slice(0, 200)}${breach.description.length > 200 ? "..." : ""}`
+                  )
+                );
+              }
+              if (filter === "breached-detailed" && breach.pwnCount) {
+                console.log(
+                  chalk.blue(
+                    `       Accounts affected: ${breach.pwnCount.toLocaleString()}`
+                  )
+                );
+              }
+            });
+            if (filter === "breached" && breachInfo.breaches.length > 3) {
+              console.log(
+                chalk.gray(
+                  `     ... and ${breachInfo.breaches.length - 3} more breaches`
+                )
+              );
+            }
+            console.log(""); // Add spacing
+          }
+        } catch (e) {
+          // Invalid JSON
+        }
+      }
     }
   }
 
@@ -98,7 +164,10 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log("  --safe              Show only safe passwords");
   console.log("  --unchecked         Show only unchecked passwords");
   console.log(
-    "  --breached          Show only accounts found in data breaches"
+    "  --breached          Show only accounts found in data breaches (top 3 per account)"
+  );
+  console.log(
+    "  --breached-detailed Show all breach details with full information"
   );
   console.log("  --chrome            Show only Chrome-imported entries");
   console.log(
@@ -114,6 +183,8 @@ if (args.includes("--compromised")) {
   filter = "safe";
 } else if (args.includes("--unchecked")) {
   filter = "unchecked";
+} else if (args.includes("--breached-detailed")) {
+  filter = "breached-detailed";
 } else if (args.includes("--breached")) {
   filter = "breached";
 } else if (args.includes("--chrome")) {

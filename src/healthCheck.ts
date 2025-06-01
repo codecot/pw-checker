@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 // healthCheck.ts - Validate pw-checker installation and configuration
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 import { getDatabase } from "./database.js";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // ESM replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -40,13 +44,14 @@ async function runHealthCheck() {
     allGood = false;
   }
 
-  // Check 3: Verify example data files
-  console.log("\n📄 Checking data files...");
-  const dataFiles = [
+  // Check 3: Verify template files
+  console.log("\n📄 Checking template files...");
+  const templateFiles = [
     "data/passwords.csv.template",
     "data/chrome-passwords.csv.template",
+    ".env.template",
   ];
-  for (const file of dataFiles) {
+  for (const file of templateFiles) {
     if (fs.existsSync(file)) {
       console.log(chalk.green(`✅ ${file} exists`));
     } else {
