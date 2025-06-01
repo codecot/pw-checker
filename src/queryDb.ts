@@ -18,7 +18,7 @@ async function showTable(filter?: string) {
   });
 
   let query =
-    "SELECT id, name, url, username, compromised, last_checked_at, breach_info, risk_score, risk_label, risk_factors FROM pw_entries";
+    "SELECT id, name, url, username, compromised, last_checked_at, breach_info, risk_score, risk_label, risk_factors, category, folder_name, source FROM pw_entries";
 
   // Add filter if provided
   if (filter === "compromised") {
@@ -37,6 +37,8 @@ async function showTable(filter?: string) {
     query += " WHERE source = 'chrome'";
   } else if (filter === "chrome-compromised") {
     query += " WHERE source = 'chrome' AND compromised = 1";
+  } else if (filter === "bitwarden") {
+    query += " WHERE source = 'bitwarden'";
   } else if (filter === "risk-critical") {
     query += " WHERE risk_label = 'Critical'";
   } else if (filter === "risk-high") {
@@ -100,12 +102,20 @@ async function showTable(filter?: string) {
         riskText = ` | Risk: ${riskColor(row.risk_label)} (${row.risk_score})`;
       }
 
+      // Check for Bitwarden-specific info
+      let bitwardenText = "";
+      if (row.source === "bitwarden") {
+        const categoryText = row.category && row.category !== "other" ? ` [${row.category}]` : "";
+        const folderText = row.folder_name ? ` 📁${row.folder_name}` : "";
+        bitwardenText = chalk.blue(`${categoryText}${folderText}`);
+      }
+
       console.log(
         `${chalk.bold(row.id)} | ${chalk.cyan(row.name)} | ${chalk.gray(
           row.url
         )} | ${chalk.magenta(row.username)} | ${status} | ${
           row.last_checked_at || "never checked"
-        }${breachText}${riskText}`
+        }${breachText}${riskText} ${bitwardenText}`
       );
 
       // Show detailed breach info if requested and available
@@ -197,6 +207,7 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log(
     "  --chrome-compromised Show only Chrome entries marked as compromised"
   );
+  console.log("  --bitwarden         Show only Bitwarden-imported entries");
   console.log("  --risk-critical     Show only critical risk accounts");
   console.log("  --risk-high         Show only high risk accounts");
   console.log("  --risk-medium       Show only medium risk accounts");
@@ -220,6 +231,8 @@ if (args.includes("--compromised")) {
   filter = "chrome";
 } else if (args.includes("--chrome-compromised")) {
   filter = "chrome-compromised";
+} else if (args.includes("--bitwarden")) {
+  filter = "bitwarden";
 }
 
 // Handle EPIPE errors gracefully when output is piped

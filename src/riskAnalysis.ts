@@ -58,7 +58,9 @@ async function displayRiskAnalysis(limit: number = 20): Promise<void> {
     // Show risk factors
     if (entry.risk_factors) {
       try {
-        const factors = JSON.parse(entry.risk_factors);
+        const factors = Array.isArray(entry.risk_factors)
+          ? entry.risk_factors
+          : JSON.parse(entry.risk_factors);
         if (factors.length > 0) {
           console.log(`    ${chalk.gray("Issues:")} ${factors.join(", ")}`);
         }
