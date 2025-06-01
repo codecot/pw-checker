@@ -18,7 +18,14 @@ function hashPassword(password: string): string {
 }
 
 // Check a single password against HIBP API
-async function checkPasswordAgainstHIBP(password: string): Promise<boolean> {
+async function checkPasswordAgainstHIBP(
+  password: string | null
+): Promise<boolean> {
+  // Skip null passwords (e.g., from Chrome import)
+  if (!password) {
+    return false;
+  }
+
   try {
     const passwordHash = hashPassword(password);
     const hashPrefix = passwordHash.substring(0, 5);
@@ -54,7 +61,7 @@ async function checkPasswordAgainstHIBP(password: string): Promise<boolean> {
 }
 
 // Check all passwords in the database
-export async function checkAllPasswords(): Promise<void> {
+export async function checkAllPasswords(limit?: number): Promise<void> {
   const db = await open({
     filename: dbPath,
     driver: sqlite3.Database,
@@ -68,13 +75,33 @@ export async function checkAllPasswords(): Promise<void> {
       "SELECT id, password FROM pw_entries WHERE compromised IS NULL"
     );
 
-    console.log(chalk.blue(`🔍 Found ${rows.length} passwords to check.`));
+    const limitedRows = limit ? rows.slice(0, limit) : rows;
+
+    console.log(
+      chalk.blue(`🔍 Found ${limitedRows.length} passwords to check.`)
+    );
 
     let compromisedCount = 0;
+    let skippedCount = 0;
 
     // Add a small delay between requests to respect API rate limits
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (let i = 0; i < limitedRows.length; i++) {
+      const row = limitedRows[i];
+
+      if (row.password === null) {
+        console.log(
+          chalk.yellow(
+            `⚠️  Password #${row.id} is missing (likely from Chrome import).`
+          )
+        );
+        // Mark as unchecked but not null to avoid rechecking
+        await db.run(
+          'UPDATE pw_entries SET last_checked_at = datetime("now"), notes = "Missing password" WHERE id = ?',
+          row.id
+        );
+        skippedCount++;
+        continue;
+      }
 
       const isCompromised = await checkPasswordAgainstHIBP(row.password);
 
@@ -93,7 +120,7 @@ export async function checkAllPasswords(): Promise<void> {
       }
 
       // Small delay to prevent API rate limiting
-      if (i < rows.length - 1) {
+      if (i < limitedRows.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
     }
@@ -101,8 +128,8 @@ export async function checkAllPasswords(): Promise<void> {
     console.log(
       chalk.blue(
         `\n📊 Results: ${compromisedCount} compromised, ${
-          rows.length - compromisedCount
-        } safe`
+          limitedRows.length - compromisedCount - skippedCount
+        } safe, ${skippedCount} skipped (missing passwords)`
       )
     );
   } catch (error) {

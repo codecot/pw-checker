@@ -33,6 +33,10 @@ coverage
 db/*.sqlite
 db/*.db
 data/passwords.csv
+data/chrome-passwords.csv
+data/*passwords*.csv
+# Allow only template files
+!data/*.template
 
 # Bower dependency directory (https://bower.io/)
 bower_components

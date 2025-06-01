@@ -4,12 +4,26 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "help": "NODE_OPTIONS=\"--import tsx\" node src/index.ts --help",
+    "health": "NODE_OPTIONS=\"--import tsx\" node src/healthCheck.ts",
+    "security:setup": "bash scripts/setup-security.sh",
     "build": "tsc",
-    "view": "node --loader ts-node/esm src/queryDb.ts",
-    "view:compromised": "node --loader ts-node/esm src/queryDb.ts --compromised",
-    "view:safe": "node --loader ts-node/esm src/queryDb.ts --safe",
-    "view:unchecked": "node --loader ts-node/esm src/queryDb.ts --unchecked",
-    "start": "node --loader ts-node/esm src/index.ts"
+    "view": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts",
+    "view:compromised": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --compromised",
+    "view:safe": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --safe",
+    "view:unchecked": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --unchecked",
+    "view:breached": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --breached",
+    "view:chrome": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --chrome",
+    "view:chrome-compromised": "NODE_OPTIONS=\"--import tsx\" node src/queryDb.ts --chrome-compromised",
+    "start": "NODE_OPTIONS=\"--import tsx\" node src/index.ts",
+    "import:chrome": "NODE_OPTIONS=\"--import tsx\" node src/index.ts --chrome",
+    "import:chrome-csv": "NODE_OPTIONS=\"--import tsx\" node src/index.ts --chrome-csv",
+    "check:breaches": "NODE_OPTIONS=\"--import tsx\" node src/index.ts --check-breaches",
+    "clear:db": "NODE_OPTIONS=\"--import tsx\" node src/clearDb.ts",
+    "update:schema": "NODE_OPTIONS=\"--import tsx\" node src/updateDbSchema.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepare": "husky"
   },
   "keywords": [],
   "description": "CLI tool to audit passwords locally using HIBP and Chrome data",
@@ -23,5 +37,14 @@
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.4"
+  },
+  "lint-staged": {
+    "*.{ts,js,json}": "prettier --write"
   }
 }

@@ -21,13 +21,16 @@ This tool allows you to check if your passwords have been compromised in data br
 | SQLite database setup | ✅ Done (pw_entries table) |
 | Terminal viewer with filters | ✅ Done (queryDb.ts) |
 | Modern TypeScript + ES Modules | ✅ Done |
+| Chrome DB import | ✅ Done (importFromChrome.ts) |
+| Chrome CSV export import | ✅ Done (importFromChromeCsv.ts) |
+| Account breach checking | ✅ Done (checkBreaches.ts) |
+| Code formatting with Prettier | ✅ Done |
 | MIT License & GitHub repo | ✅ Done |
 
 ### 📋 Planned Features
 
 | Goal | Description |
 | ---- | ----------- |
-| 🔍 Chrome DB import | Read Login Data from Chrome and mark compromised accounts |
 | 📊 Password strength analysis | Use zxcvbn or OWASP to score each password |
 | 🏷 Credential categorization | Mark entries like bank, email, work, etc. |
 | 🖼 Logo/visual enrichment | Pull site logos via Clearbit API |
@@ -49,65 +52,114 @@ cd pw-checker
 # Install dependencies
 npm install
 
-# Run the application
-npm start
+# Verify installation
+npm run health
+
+# Show help
+npm run help
 ```
 
-## Usage
-
-First, prepare a CSV file with your passwords in the following format:
-
-```csv
-name,url,username,password
-Google,https://accounts.google.com,user@gmail.com,your-password
-```
-
-Place this file at `data/passwords.csv` (or update the path in `index.ts`).
-
-An example file is provided at `data/example-passwords.csv`. You can use it like this:
+## Quick Start
 
 ```bash
-# Copy the example file (do not commit your actual passwords!)
-cp data/example-passwords.csv data/passwords.csv
+# Set up secure password file structure
+npm run security:setup
 
-# Run the application
-npm start
+# Copy the example file (do not commit your actual passwords!)
+cp data/passwords.csv.template data/passwords.csv
+
+# Run the application in development mode (limits API calls)
+npm start -- --dev
+
+# View results
+npm run view
+```
+
+## 🔒 Security & Privacy
+
+**Your data stays local** - passwords never leave your machine:
+- All processing happens locally in SQLite
+- Only password hash prefixes (5 chars) are sent to HIBP API
+- CSV files containing real passwords are never committed to Git
+- Comprehensive `.gitignore` protects sensitive files
+
+### Security Setup
+
+```bash
+# Automated security setup
+npm run security:setup
+
+# Manual verification
+git check-ignore data/passwords.csv data/chrome-passwords.csv
 ```
 
 ### Available Commands
 
-- `npm start` - Import passwords from CSV and check them against HIBP
+**Core Commands:**
+
+- `npm run help` - Show detailed help information
+- `npm run health` - Run system health check  
+- `npm run security:setup` - Set up secure password file structure
+- `npm start` - Import CSV and check passwords (full mode)
+- `npm start -- --dev` - Development mode (limits API calls to 5 records)
+- `npm start -- --skip-network` - Skip all network API calls
+
+**Import Commands:**
+
+- `npm run import:chrome` - Import passwords from Chrome database
+- `npm run import:chrome-csv` - Import passwords from Chrome CSV export
+- `npm run check:breaches` - Check email accounts for data breaches (requires HIBP API key)
+
+**View Commands:**
+
 - `npm run view` - View all passwords and their status
 - `npm run view:compromised` - View only compromised passwords
 - `npm run view:safe` - View only safe passwords
 - `npm run view:unchecked` - View only unchecked passwords
+- `npm run view:breached` - View only accounts found in data breaches
+- `npm run view:chrome` - View only Chrome-imported entries
+- `npm run view:chrome-compromised` - View only Chrome entries marked as compromised
 
-## Security Considerations
+**Utility Commands:**
 
-- This tool stores passwords in plaintext in a local SQLite database
-- Never share your `pw_entries.sqlite` database file
-- Consider adding the `db/` directory to your `.gitignore` file (already done in this repo)
+- `npm run clear:db` - Clear the database
+- `npm run format` - Format code using Prettier
+
+**Read our comprehensive security guide:** [`docs/SECURITY.md`](docs/SECURITY.md)
 
 ## Project Structure
 
-```
+```text
 pw-checker/
 ├── src/
 │   ├── index.ts             # Entry point
 │   ├── importCsv.ts         # CSV → SQLite
+│   ├── importFromChrome.ts  # Chrome DB → SQLite
+│   ├── importFromChromeCsv.ts # Chrome CSV → SQLite
 │   ├── checkPasswords.ts    # HIBP verification
+│   ├── checkBreaches.ts     # Account breach checking
 │   ├── queryDb.ts           # View data
+│   ├── clearDb.ts           # Clear database
+│   ├── healthCheck.ts       # System health verification
+│   └── database.ts          # Shared database utilities
 ├── data/
-│   ├── passwords.csv        # Input file
-│   └── example-passwords.csv # Example template
+│   ├── passwords.csv        # Your password data (NEVER COMMITTED)
+│   ├── chrome-passwords.csv # Chrome CSV export (NEVER COMMITTED)
+│   ├── passwords.csv.template      # Template for CSV passwords
+│   └── chrome-passwords.csv.template # Template for Chrome CSV export
 ├── db/
-│   └── pw_entries.sqlite    # Local database
+│   └── pw_entries.sqlite    # Local database (NEVER COMMITTED)
+├── docs/
+│   └── SECURITY.md          # Comprehensive security guide
+├── scripts/
+│   └── setup-security.sh    # Automated security setup
 ├── package.json
 ├── tsconfig.json
+├── .prettierrc              # Prettier configuration
 ├── LICENSE (MIT)
 ├── README.md
 ├── CONTRIBUTING.md
-└── .gitignore
+└── .gitignore               # Protects sensitive files
 ```
 
 ## License

@@ -4,12 +4,11 @@ import { fileURLToPath } from "url";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import csv from "csv-parser";
+import { initDatabase } from "./database.js";
 
 // ESM replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const dbPath = path.resolve(__dirname, "../db/pw_entries.sqlite");
 
 export async function importCsvToDb(csvFilePath: string) {
   if (!fs.existsSync(csvFilePath)) {
@@ -17,23 +16,7 @@ export async function importCsvToDb(csvFilePath: string) {
     process.exit(1);
   }
 
-  const db = await open({
-    filename: dbPath,
-    driver: sqlite3.Database,
-  });
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS pw_entries  (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      url TEXT,
-      username TEXT,
-      password TEXT,
-      compromised BOOLEAN DEFAULT NULL,
-      source TEXT DEFAULT 'csv',
-      last_checked_at TEXT DEFAULT NULL
-    )
-  `);
+  const db = await initDatabase();
 
   console.log(`📥 Importing from CSV: ${csvFilePath}`);
 
