@@ -35,6 +35,17 @@ async function updateDatabaseSchema() {
       (column) => column.name === "breach_info"
     );
 
+    // Check if risk columns exist
+    const riskScoreColumnExists = tableInfo.some(
+      (column) => column.name === "risk_score"
+    );
+    const riskLabelColumnExists = tableInfo.some(
+      (column) => column.name === "risk_label"
+    );
+    const riskFactorsColumnExists = tableInfo.some(
+      (column) => column.name === "risk_factors"
+    );
+
     // Add notes column if it doesn't exist
     if (!notesColumnExists) {
       await db.run("ALTER TABLE pw_entries ADD COLUMN notes TEXT");

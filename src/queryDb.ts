@@ -18,7 +18,7 @@ async function showTable(filter?: string) {
   });
 
   let query =
-    "SELECT id, name, url, username, compromised, last_checked_at, breach_info FROM pw_entries";
+    "SELECT id, name, url, username, compromised, last_checked_at, breach_info, risk_score, risk_label, risk_factors FROM pw_entries";
 
   // Add filter if provided
   if (filter === "compromised") {
@@ -37,6 +37,16 @@ async function showTable(filter?: string) {
     query += " WHERE source = 'chrome'";
   } else if (filter === "chrome-compromised") {
     query += " WHERE source = 'chrome' AND compromised = 1";
+  } else if (filter === "risk-critical") {
+    query += " WHERE risk_label = 'Critical'";
+  } else if (filter === "risk-high") {
+    query += " WHERE risk_label = 'High'";
+  } else if (filter === "risk-medium") {
+    query += " WHERE risk_label = 'Medium'";
+  } else if (filter === "risk-low") {
+    query += " WHERE risk_label = 'Low'";
+  } else if (filter === "by-risk") {
+    query += " WHERE risk_score IS NOT NULL ORDER BY risk_score DESC, name ASC";
   }
 
   const rows = await db.all(query);
@@ -76,12 +86,26 @@ async function showTable(filter?: string) {
         }
       }
 
+      // Check for risk info
+      let riskText = "";
+      if (row.risk_score !== null && row.risk_label) {
+        const riskColor =
+          row.risk_label === "Critical"
+            ? chalk.red.bold
+            : row.risk_label === "High"
+              ? chalk.red
+              : row.risk_label === "Medium"
+                ? chalk.yellow
+                : chalk.green;
+        riskText = ` | Risk: ${riskColor(row.risk_label)} (${row.risk_score})`;
+      }
+
       console.log(
         `${chalk.bold(row.id)} | ${chalk.cyan(row.name)} | ${chalk.gray(
           row.url
         )} | ${chalk.magenta(row.username)} | ${status} | ${
           row.last_checked_at || "never checked"
-        }${breachText}`
+        }${breachText}${riskText}`
       );
 
       // Show detailed breach info if requested and available
@@ -173,6 +197,11 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log(
     "  --chrome-compromised Show only Chrome entries marked as compromised"
   );
+  console.log("  --risk-critical     Show only critical risk accounts");
+  console.log("  --risk-high         Show only high risk accounts");
+  console.log("  --risk-medium       Show only medium risk accounts");
+  console.log("  --risk-low          Show only low risk accounts");
+  console.log("  --by-risk           Show all accounts sorted by risk score");
   console.log("  --help, -h          Show this help message");
   process.exit(0);
 }

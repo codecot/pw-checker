@@ -38,6 +38,9 @@ data/*passwords*.csv
 # Allow only template files
 !data/*.template
 
+# Generated reports
+reports/*.pdf
+
 # Bower dependency directory (https://bower.io/)
 bower_components
 
