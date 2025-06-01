@@ -46,6 +46,14 @@ async function updateDatabaseSchema() {
       (column) => column.name === "risk_factors"
     );
 
+    // Check if Bitwarden-specific columns exist
+    const categoryColumnExists = tableInfo.some(
+      (column) => column.name === "category"
+    );
+    const folderNameColumnExists = tableInfo.some(
+      (column) => column.name === "folder_name"
+    );
+
     // Add notes column if it doesn't exist
     if (!notesColumnExists) {
       await db.run("ALTER TABLE pw_entries ADD COLUMN notes TEXT");
@@ -66,6 +74,33 @@ async function updateDatabaseSchema() {
       console.log(
         chalk.yellow("⚠️ Breach info column already exists. No changes made.")
       );
+    }
+
+    // Add risk columns if they don't exist
+    if (!riskScoreColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN risk_score INTEGER DEFAULT 0");
+      console.log(chalk.green("✅ Added 'risk_score' column to the database."));
+    }
+
+    if (!riskLabelColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN risk_label TEXT DEFAULT 'Unknown'");
+      console.log(chalk.green("✅ Added 'risk_label' column to the database."));
+    }
+
+    if (!riskFactorsColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN risk_factors TEXT");
+      console.log(chalk.green("✅ Added 'risk_factors' column to the database."));
+    }
+
+    // Add Bitwarden-specific columns if they don't exist
+    if (!categoryColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN category TEXT DEFAULT 'other'");
+      console.log(chalk.green("✅ Added 'category' column to the database."));
+    }
+
+    if (!folderNameColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN folder_name TEXT");
+      console.log(chalk.green("✅ Added 'folder_name' column to the database."));
     }
 
     await db.close();
