@@ -189,7 +189,10 @@ async function main(): Promise<void> {
       await displayRiskAnalysis(limit);
     }
   } catch (error) {
-    console.error(chalk.red("❌ Error during risk analysis:"), error.message);
+    console.error(
+      chalk.red("❌ Error during risk analysis:"),
+      error instanceof Error ? error.message : String(error)
+    );
     process.exit(1);
   }
 }

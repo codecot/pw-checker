@@ -1,0 +1,38 @@
+# Development files
+.vscode/
+.idea/
+.git/
+.github/
+.gitignore
+.editorconfig
+.eslintrc
+.prettierrc
+tsconfig.json
+
+# Source files (since we're publishing compiled JS)
+src/
+
+# Test data and personal files - contain sensitive data
+db/*.sqlite
+data/passwords.csv
+data/chrome-passwords.csv
+reports/*.pdf
+reports/*.csv
+
+# CI/CD and build files
+.github/
+.travis.yml
+.gitlab-ci.yml
+
+# Development-only scripts
+scripts/dev-*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
