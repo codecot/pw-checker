@@ -37,6 +37,9 @@ async function showTable(filter?: string) {
     query += " WHERE source = 'chrome'";
   } else if (filter === "chrome-compromised") {
     query += " WHERE source = 'chrome' AND compromised = 1";
+  } else if (filter === "chrome-only-compromised") {
+    query +=
+      " WHERE source = 'chrome' AND compromised = 1 AND (breach_info IS NULL OR breach_info NOT LIKE '%\"breached\":true%')";
   } else if (filter === "bitwarden") {
     query += " WHERE source = 'bitwarden'";
   } else if (filter === "risk-critical") {
@@ -105,7 +108,8 @@ async function showTable(filter?: string) {
       // Check for Bitwarden-specific info
       let bitwardenText = "";
       if (row.source === "bitwarden") {
-        const categoryText = row.category && row.category !== "other" ? ` [${row.category}]` : "";
+        const categoryText =
+          row.category && row.category !== "other" ? ` [${row.category}]` : "";
         const folderText = row.folder_name ? ` 📁${row.folder_name}` : "";
         bitwardenText = chalk.blue(`${categoryText}${folderText}`);
       }
@@ -207,6 +211,9 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log(
     "  --chrome-compromised Show only Chrome entries marked as compromised"
   );
+  console.log(
+    "  --chrome-only-compromised Show Chrome-compromised credentials without HIBP breaches"
+  );
   console.log("  --bitwarden         Show only Bitwarden-imported entries");
   console.log("  --risk-critical     Show only critical risk accounts");
   console.log("  --risk-high         Show only high risk accounts");
@@ -231,6 +238,8 @@ if (args.includes("--compromised")) {
   filter = "chrome";
 } else if (args.includes("--chrome-compromised")) {
   filter = "chrome-compromised";
+} else if (args.includes("--chrome-only-compromised")) {
+  filter = "chrome-only-compromised";
 } else if (args.includes("--bitwarden")) {
   filter = "bitwarden";
 }

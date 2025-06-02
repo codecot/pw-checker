@@ -60,56 +60,56 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
     // Risk breakdown
     const riskBreakdown: { [key: string]: number } = {};
     const riskResults = await db.all(`
-      SELECT risk_label, COUNT(*) as count FROM pw_entries 
-      WHERE risk_label IS NOT NULL 
+      SELECT risk_label, COUNT(*) as count FROM pw_entries
+      WHERE risk_label IS NOT NULL
       GROUP BY risk_label
     `);
-    riskResults.forEach(row => {
-      riskBreakdown[row.risk_label || 'Unknown'] = row.count;
+    riskResults.forEach((row) => {
+      riskBreakdown[row.risk_label || "Unknown"] = row.count;
     });
 
     // Sources breakdown
     const sourcesBreakdown: { [key: string]: number } = {};
     const sourcesResults = await db.all(`
-      SELECT source, COUNT(*) as count FROM pw_entries 
+      SELECT source, COUNT(*) as count FROM pw_entries
       GROUP BY source
     `);
-    sourcesResults.forEach(row => {
-      sourcesBreakdown[row.source || 'Unknown'] = row.count;
+    sourcesResults.forEach((row) => {
+      sourcesBreakdown[row.source || "Unknown"] = row.count;
     });
 
     // Categories breakdown
     const categoriesBreakdown: { [key: string]: number } = {};
     const categoriesResults = await db.all(`
-      SELECT category, COUNT(*) as count FROM pw_entries 
-      WHERE category IS NOT NULL 
+      SELECT category, COUNT(*) as count FROM pw_entries
+      WHERE category IS NOT NULL
       GROUP BY category
     `);
-    categoriesResults.forEach(row => {
-      categoriesBreakdown[row.category || 'other'] = row.count;
+    categoriesResults.forEach((row) => {
+      categoriesBreakdown[row.category || "other"] = row.count;
     });
 
     // Password strength analysis
     const passwordStrengthBreakdown: { [key: string]: number } = {
-      'Very Weak': 0,
-      'Weak': 0,
-      'Medium': 0,
-      'Strong': 0,
-      'Very Strong': 0
+      "Very Weak": 0,
+      Weak: 0,
+      Medium: 0,
+      Strong: 0,
+      "Very Strong": 0,
     };
 
     // Age breakdown
     const ageBreakdown: { [key: string]: number } = {
-      'Less than 3 months': 0,
-      '3-6 months': 0,
-      '6-12 months': 0,
-      'More than 1 year': 0,
-      'Unknown': 0
+      "Less than 3 months": 0,
+      "3-6 months": 0,
+      "6-12 months": 0,
+      "More than 1 year": 0,
+      Unknown: 0,
     };
 
     // Get all entries for detailed analysis
     const allEntries = await db.all(`
-      SELECT password, date_created, risk_score, risk_factors 
+      SELECT password, date_created, risk_score, risk_factors
       FROM pw_entries
     `);
 
@@ -119,7 +119,7 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
     let ageCount = 0;
     const passwordCounts = new Map<string, number>();
 
-    allEntries.forEach(entry => {
+    allEntries.forEach((entry) => {
       // Count password duplicates
       const count = passwordCounts.get(entry.password) || 0;
       passwordCounts.set(entry.password, count + 1);
@@ -128,7 +128,7 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
       // Analyze password strength
       const strength = analyzePasswordStrength(entry.password);
       passwordStrengthBreakdown[strength]++;
-      if (strength === 'Very Weak' || strength === 'Weak') {
+      if (strength === "Very Weak" || strength === "Weak") {
         weakPasswords++;
       }
 
@@ -136,21 +136,22 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
       if (entry.date_created) {
         const created = new Date(entry.date_created);
         const now = new Date();
-        const ageMonths = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+        const ageMonths =
+          (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
         totalAge += ageMonths;
         ageCount++;
 
         if (ageMonths < 3) {
-          ageBreakdown['Less than 3 months']++;
+          ageBreakdown["Less than 3 months"]++;
         } else if (ageMonths < 6) {
-          ageBreakdown['3-6 months']++;
+          ageBreakdown["3-6 months"]++;
         } else if (ageMonths < 12) {
-          ageBreakdown['6-12 months']++;
+          ageBreakdown["6-12 months"]++;
         } else {
-          ageBreakdown['More than 1 year']++;
+          ageBreakdown["More than 1 year"]++;
         }
       } else {
-        ageBreakdown['Unknown']++;
+        ageBreakdown["Unknown"]++;
       }
     });
 
@@ -159,21 +160,21 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
     // Top risky accounts
     const topRiskyAccounts = await db.all(`
       SELECT url, username, risk_score, risk_label, risk_factors,
-             (CASE 
+             (CASE
                 WHEN LENGTH(url) > 50 THEN SUBSTR(url, 1, 47) || '...'
                 ELSE url
               END) as name
-      FROM pw_entries 
-      WHERE risk_score IS NOT NULL 
-      ORDER BY risk_score DESC 
+      FROM pw_entries
+      WHERE risk_score IS NOT NULL
+      ORDER BY risk_score DESC
       LIMIT 20
     `);
 
     // Breach summary
     const breachSummary: { [key: string]: number } = {};
     const breachResults = await db.all(`
-      SELECT 
-        CASE 
+      SELECT
+        CASE
           WHEN breach_info IS NULL THEN 'No breaches'
           WHEN breach_info LIKE '%"breached":false%' THEN 'Email not breached'
           WHEN breach_info LIKE '%"breached":true%' THEN 'Email breached'
@@ -183,25 +184,25 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
       FROM pw_entries
       GROUP BY breach_status
     `);
-    breachResults.forEach(row => {
+    breachResults.forEach((row) => {
       breachSummary[row.breach_status] = row.count;
     });
 
     // Top breached domains
     const topBreachedDomains = await db.all(`
-      SELECT 
-        CASE 
-          WHEN url LIKE 'http%' THEN 
-            SUBSTR(url, INSTR(url, '://') + 3, 
-                   CASE 
-                     WHEN INSTR(SUBSTR(url, INSTR(url, '://') + 3), '/') > 0 
+      SELECT
+        CASE
+          WHEN url LIKE 'http%' THEN
+            SUBSTR(url, INSTR(url, '://') + 3,
+                   CASE
+                     WHEN INSTR(SUBSTR(url, INSTR(url, '://') + 3), '/') > 0
                      THEN INSTR(SUBSTR(url, INSTR(url, '://') + 3), '/') - 1
                      ELSE LENGTH(SUBSTR(url, INSTR(url, '://') + 3))
                    END)
           ELSE url
         END as domain,
         COUNT(*) as count
-      FROM pw_entries 
+      FROM pw_entries
       WHERE breach_info LIKE '%"breached":true%'
       GROUP BY domain
       ORDER BY count DESC
@@ -215,7 +216,7 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
       breachedEmails: breachedEmails.count,
       riskBreakdown,
       duplicatePasswords,
-      weakPasswords
+      weakPasswords,
     });
 
     // Mock monthly trend data (in a real implementation, you'd track this over time)
@@ -238,7 +239,7 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
       weakPasswords,
       averagePasswordAge,
       topBreachedDomains,
-      monthlyRiskTrend
+      monthlyRiskTrend,
     };
   } finally {
     await db.close();
@@ -249,14 +250,14 @@ export async function generateSecurityReportData(): Promise<SecurityReportData> 
  * Analyze password strength
  */
 function analyzePasswordStrength(password: string): string {
-  if (!password) return 'Very Weak';
-  
+  if (!password) return "Very Weak";
+
   const length = password.length;
   const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumbers = /\d/.test(password);
   const hasSymbols = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-  
+
   let score = 0;
   if (length >= 8) score += 1;
   if (length >= 12) score += 1;
@@ -264,22 +265,22 @@ function analyzePasswordStrength(password: string): string {
   if (hasUpper) score += 1;
   if (hasNumbers) score += 1;
   if (hasSymbols) score += 1;
-  
-  if (score <= 2) return 'Very Weak';
-  if (score <= 3) return 'Weak';
-  if (score <= 4) return 'Medium';
-  if (score <= 5) return 'Strong';
-  return 'Very Strong';
+
+  if (score <= 2) return "Very Weak";
+  if (score <= 3) return "Weak";
+  if (score <= 4) return "Medium";
+  if (score <= 5) return "Strong";
+  return "Very Strong";
 }
 
 /**
  * Generate mock trend data for demonstration
  */
 function generateMockTrend(): Array<{ month: string; risk: number }> {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  return months.map(month => ({
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+  return months.map((month) => ({
     month,
-    risk: Math.floor(Math.random() * 40) + 30 // Random risk between 30-70
+    risk: Math.floor(Math.random() * 40) + 30, // Random risk between 30-70
   }));
 }
 
@@ -322,9 +323,7 @@ function generateRecommendations(data: {
   }
 
   if (data.weakPasswords && data.weakPasswords > 0) {
-    recommendations.push(
-      `💪 Strengthen ${data.weakPasswords} weak passwords`
-    );
+    recommendations.push(`💪 Strengthen ${data.weakPasswords} weak passwords`);
   }
 
   // General security recommendations
@@ -340,12 +339,8 @@ function generateRecommendations(data: {
   recommendations.push(
     "📅 Set up regular password audits (quarterly recommended)"
   );
-  recommendations.push(
-    "🔒 Enable two-factor authentication wherever possible"
-  );
-  recommendations.push(
-    "🚨 Monitor your accounts for unusual activity"
-  );
+  recommendations.push("🔒 Enable two-factor authentication wherever possible");
+  recommendations.push("🚨 Monitor your accounts for unusual activity");
   recommendations.push(
     "📧 Check if your email appears in new data breaches regularly"
   );
@@ -521,7 +516,7 @@ export async function generatePDFSecurityReport(
       let factorsText = "None";
       if (account.risk_factors) {
         try {
-          const factors = JSON.parse(account.risk_factors);
+          const factors = account.risk_factors;
           factorsText =
             factors.length > 0 ? factors[0].substring(0, 30) + "..." : "None";
         } catch (e) {

@@ -44,9 +44,28 @@ This tool allows you to check if your passwords have been compromised in data br
 
 ## Installation
 
+### NPM Global Installation
+
+```bash
+# Install globally
+npm install -g @codecot/pw-checker
+
+# Run the tool
+pw-checker --help
+```
+
+### Direct Usage with npx
+
+```bash
+# Run without installing
+npx @codecot/pw-checker --help
+```
+
+### Manual Installation
+
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pw-checker.git
+git clone https://github.com/codecot/pw-checker.git
 cd pw-checker
 
 # Install dependencies

@@ -78,35 +78,47 @@ async function updateDatabaseSchema() {
 
     // Add risk columns if they don't exist
     if (!riskScoreColumnExists) {
-      await db.run("ALTER TABLE pw_entries ADD COLUMN risk_score INTEGER DEFAULT 0");
+      await db.run(
+        "ALTER TABLE pw_entries ADD COLUMN risk_score INTEGER DEFAULT 0"
+      );
       console.log(chalk.green("✅ Added 'risk_score' column to the database."));
     }
 
     if (!riskLabelColumnExists) {
-      await db.run("ALTER TABLE pw_entries ADD COLUMN risk_label TEXT DEFAULT 'Unknown'");
+      await db.run(
+        "ALTER TABLE pw_entries ADD COLUMN risk_label TEXT DEFAULT 'Unknown'"
+      );
       console.log(chalk.green("✅ Added 'risk_label' column to the database."));
     }
 
     if (!riskFactorsColumnExists) {
       await db.run("ALTER TABLE pw_entries ADD COLUMN risk_factors TEXT");
-      console.log(chalk.green("✅ Added 'risk_factors' column to the database."));
+      console.log(
+        chalk.green("✅ Added 'risk_factors' column to the database.")
+      );
     }
 
     // Add Bitwarden-specific columns if they don't exist
     if (!categoryColumnExists) {
-      await db.run("ALTER TABLE pw_entries ADD COLUMN category TEXT DEFAULT 'other'");
+      await db.run(
+        "ALTER TABLE pw_entries ADD COLUMN category TEXT DEFAULT 'other'"
+      );
       console.log(chalk.green("✅ Added 'category' column to the database."));
     }
 
     if (!folderNameColumnExists) {
       await db.run("ALTER TABLE pw_entries ADD COLUMN folder_name TEXT");
-      console.log(chalk.green("✅ Added 'folder_name' column to the database."));
+      console.log(
+        chalk.green("✅ Added 'folder_name' column to the database.")
+      );
     }
 
     await db.close();
   } catch (error) {
     console.error(
-      chalk.red(`❌ Error updating database schema: ${error.message}`)
+      chalk.red(
+        `❌ Error updating database schema: ${error instanceof Error ? error.message : String(error)}`
+      )
     );
     process.exit(1);
   }

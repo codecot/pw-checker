@@ -46,7 +46,11 @@ async function clearDatabase() {
       )
     );
   } catch (error) {
-    console.error(chalk.red(`❌ Error clearing database: ${error.message}`));
+    console.error(
+      chalk.red(
+        `❌ Error clearing database: ${error instanceof Error ? error.message : String(error)}`
+      )
+    );
     process.exit(1);
   }
 }
