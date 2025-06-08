@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import chalk from "chalk";
+import { normalizeDomain } from "./domainNormalizer.js";
 
 // ESM replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -143,14 +144,17 @@ export async function importFromChrome(): Promise<number> {
         ? `Imported from Chrome (password not accessible) - Chrome detected as compromised (type: ${row.insecurity_type})`
         : "Imported from Chrome (password not accessible)";
 
+      const normalizedDomain = normalizeDomain(row.origin_url);
+
       await pwDb.run(
-        "INSERT INTO pw_entries (name, url, username, source, compromised, notes) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO pw_entries (name, url, username, source, compromised, notes, normalized_domain) VALUES (?, ?, ?, ?, ?, ?, ?)",
         getDomainFromUrl(row.origin_url),
         row.origin_url,
         row.username_value,
         "chrome",
         row.chrome_compromised, // Use Chrome's compromise detection
-        notes
+        notes,
+        normalizedDomain
       );
 
       importCount++;

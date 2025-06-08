@@ -54,6 +54,11 @@ async function updateDatabaseSchema() {
       (column) => column.name === "folder_name"
     );
 
+    // Check if the normalized_domain column exists
+    const normalizedDomainColumnExists = tableInfo.some(
+      (column) => column.name === "normalized_domain"
+    );
+
     // Add notes column if it doesn't exist
     if (!notesColumnExists) {
       await db.run("ALTER TABLE pw_entries ADD COLUMN notes TEXT");
@@ -110,6 +115,49 @@ async function updateDatabaseSchema() {
       await db.run("ALTER TABLE pw_entries ADD COLUMN folder_name TEXT");
       console.log(
         chalk.green("✅ Added 'folder_name' column to the database.")
+      );
+    }
+
+    // Add normalized_domain column if it doesn't exist
+    if (!normalizedDomainColumnExists) {
+      await db.run("ALTER TABLE pw_entries ADD COLUMN normalized_domain TEXT");
+      console.log(
+        chalk.green("✅ Added 'normalized_domain' column to the database.")
+      );
+
+      // Populate normalized_domain for existing entries
+      console.log(
+        chalk.blue("🔄 Populating normalized_domain for existing entries...")
+      );
+      const { normalizeDomain } = await import("./domainNormalizer.js");
+
+      const allEntries = await db.all(
+        "SELECT id, url FROM pw_entries WHERE url IS NOT NULL"
+      );
+      let updateCount = 0;
+
+      for (const entry of allEntries) {
+        const normalizedDomain = normalizeDomain(entry.url);
+        if (normalizedDomain) {
+          await db.run(
+            "UPDATE pw_entries SET normalized_domain = ? WHERE id = ?",
+            normalizedDomain,
+            entry.id
+          );
+          updateCount++;
+        }
+      }
+
+      console.log(
+        chalk.green(
+          `✅ Updated ${updateCount} entries with normalized domains.`
+        )
+      );
+    } else {
+      console.log(
+        chalk.yellow(
+          "⚠️ Normalized domain column already exists. No changes made."
+        )
       );
     }
 

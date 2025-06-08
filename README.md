@@ -154,6 +154,7 @@ crontab -e
 
 - [`docs/HIBP_API_SETUP.md`](docs/HIBP_API_SETUP.md) - API key setup
 - [`docs/RATE_LIMITING.md`](docs/RATE_LIMITING.md) - Detailed rate limiting guide
+- [`docs/SITE_QUERY.md`](docs/SITE_QUERY.md) - Site-based credential search guide
 - [`docs/ADVANCED_FEATURES.md`](docs/ADVANCED_FEATURES.md) - Complete guide to advanced features
 
 ### Available Commands
@@ -189,6 +190,15 @@ crontab -e
 - `npm run view:breached:detailed` - View detailed breach information with descriptions and affected data
 - `npm run view:chrome` - View only Chrome-imported entries
 - `npm run view:chrome-compromised` - View only Chrome entries marked as compromised
+- `npm run view:site --site=example.com` - Search credentials by domain/site with smart matching
+- `npm run view:site:help` - Show help for site-based credential search
+
+**Site-Based Search:**
+
+- `npm run view:site -- --site=google.com` - Find all Google-related credentials
+- `npm run view:site -- --site=github --show-passwords` - Show GitHub credentials with passwords
+- `npm run view:site -- --site=amazon --exact-match` - Exact domain matching only
+- `npm run view:site -- --site=netflix --json` - JSON output for automation
 
 **Analysis Commands:**
 

@@ -4,6 +4,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import chalk from "chalk";
 import { getDatabase } from "./database.js";
+import { normalizeDomain } from "./domainNormalizer.js";
 
 const execAsync = promisify(exec);
 
@@ -288,12 +289,13 @@ export async function importFromBitwarden(): Promise<void> {
         }
 
         // Insert new entry
+        const normalizedDomain = normalizeDomain(uri);
         await db.run(
           `
           INSERT INTO pw_entries (
             url, username, password, password_hash, source,
-            date_created, is_compromised, category, folder_name
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            date_created, is_compromised, category, folder_name, normalized_domain
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
           [
             uri,
@@ -305,6 +307,7 @@ export async function importFromBitwarden(): Promise<void> {
             0, // Will be checked later
             category,
             folderName || null,
+            normalizedDomain,
           ]
         );
 

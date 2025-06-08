@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import chalk from "chalk";
+import { normalizeDomain } from "./domainNormalizer.js";
 
 // ESM replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -82,10 +83,12 @@ export async function importFromChromeCsv(csvPath: string): Promise<number> {
       if (existingEntry) {
         // If entry exists but has no password (from Chrome DB import), update it
         if (existingEntry.password === null) {
+          const normalizedDomain = normalizeDomain(row.url);
           await db.run(
-            "UPDATE pw_entries SET password = ?, notes = ? WHERE id = ?",
+            "UPDATE pw_entries SET password = ?, notes = ?, normalized_domain = ? WHERE id = ?",
             row.password,
             "Updated with password from Chrome CSV export",
+            normalizedDomain,
             existingEntry.id
           );
           importCount++;
@@ -101,13 +104,15 @@ export async function importFromChromeCsv(csvPath: string): Promise<number> {
       }
 
       // Insert new entry
+      const normalizedDomain = normalizeDomain(row.url);
       await db.run(
-        "INSERT INTO pw_entries (name, url, username, password, compromised, source) VALUES (?, ?, ?, ?, ?, 'chrome')",
+        "INSERT INTO pw_entries (name, url, username, password, compromised, source, normalized_domain) VALUES (?, ?, ?, ?, ?, 'chrome', ?)",
         row.name,
         row.url,
         row.username,
         row.password,
-        row.compromised
+        row.compromised,
+        normalizedDomain
       );
       importCount++;
     }
